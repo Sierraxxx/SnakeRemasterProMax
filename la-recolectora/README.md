@@ -2,13 +2,13 @@
 
 **Un videojuego en Jack para la computadora Hack (Nand2Tetris) donde la memoria es el campo de batalla.**
 
-> 🎬 **Video de demostración y arquitectura:** [ENLACE DE YOUTUBE AQUÍ]
+> 🎬 **Video de demostración y arquitectura:** [ENLACE DE YOUTUBE AQUÍ](Todavia no esta cargado)
 
 ![Partida en curso](docs/capturas/3_cargada.png)
 
 Tu serpiente es una **lista enlazada** y solo caben **40 nodos** en memoria. Al rebotar se parte, y su mitad delantera queda tirada como **basura** que sigue ocupando memoria. Para liberarla tienes que atrapar la **pelota recolectora**, que rebota por el campo como en Pong, y limpiar la basura **en cadena**.
 
-Equipo: [Nombre A] · [Nombre B] — Organización de Computadores.
+Equipo: Juan José Sierra Ocampo · Viliam Mesa Angarita · Marbin Rivera Ciro
 
 ---
 
