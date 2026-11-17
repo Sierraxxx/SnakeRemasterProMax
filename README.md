@@ -4,7 +4,8 @@
 
 > 🎬 **Video de demostración y arquitectura:** [ENLACE DE YOUTUBE AQUÍ](Todavia no esta).
 
-![Partida en curso](docs/capturas/3_cargada.png)
+![Partida en curso](<img width="1024" height="512" alt="imagen" src="https://github.com/user-attachments/assets/acc63389-d80e-45d1-82df-e61c550ba83f" />
+)
 
 Tu serpiente es una **lista enlazada** y solo caben **40 nodos** en memoria. Al rebotar se parte, y su mitad delantera queda tirada como **basura** que sigue ocupando memoria. Para liberarla tienes que atrapar la **pelota recolectora**, que rebota por el campo como en Pong, y limpiar la basura **en cadena**.
 
