@@ -1,22 +1,45 @@
 # LA RECOLECTORA
 
-**Un videojuego en Jack para la computadora Hack (Nand2Tetris) donde la memoria es el campo de batalla**
+**Un videojuego en Jack para la computadora Hack (Nand2Tetris) donde la memoria es el campo de batalla.**
 
-> 🎬 **Video de demostración y arquitectura:** [ENLACE DE YOUTUBE AQUÍ](Todavia no esta).
-
-![Partida en curso](<img width="1024" height="512" alt="imagen" src="https://github.com/user-attachments/assets/acc63389-d80e-45d1-82df-e61c550ba83f" />
-)
+![Partida en curso](la-recolectora/docs/capturas/3_cargada.png)
 
 Tu serpiente es una **lista enlazada** y solo caben **40 nodos** en memoria. Al rebotar se parte, y su mitad delantera queda tirada como **basura** que sigue ocupando memoria. Para liberarla tienes que atrapar la **pelota recolectora**, que rebota por el campo como en Pong, y limpiar la basura **en cadena**.
 
-Equipo: Juan José Sierra Ocampo · Viliam Mesa Angarita · Marbin Rivera Ciro
+Equipo: Juan José Sierra Ocampo · Viliam Mesa Angarita · Marbin Rivera Ciro — Organización de Computadores.
+
+## Concepto y diferenciador
+
+**Nombre:** LA RECOLECTORA. **Concepto:** un juego donde administrar memoria es la mecánica: crecer reserva memoria, rebotar la ensucia y atrapar la pelota permite liberarla.
+
+**Elementos mecánicos**
+- **Serpiente = lista enlazada** de hasta 40 nodos reales del heap. Se mueve en una cuadrícula de 32 × 15 con las flechas.
+- **Dato (rombo):** +10 puntos y un nodo nuevo. Con la memoria llena (40/40), comerlo es perder.
+- **Pared de rebote:** la serpiente se invierte y su mitad delantera se suelta como **basura**, que sigue ocupando memoria.
+- **Pelota recolectora:** se mueve con velocidad (vx, vy) y rebota en paredes, basura y en el cuerpo de la serpiente. Atraparla con la cabeza carga a la serpiente.
+- **Limpieza en cadena:** cargada, al tocar basura se libera todo el grupo conectado. Puntos = n × n.
+- **Derrota:** pared sólida, propio cuerpo, basura sin carga o memoria llena.
+
+**Diferenciador frente a otros juegos hechos en Jack**
+
+Snake y Pong son de los juegos más repetidos en Jack: hay muchos Snake publicados como proyecto 9 de Nand2Tetris, y Pong es el programa de ejemplo oficial del curso.
+
+| Aspecto | Snake en Jack | Pong en Jack | LA RECOLECTORA |
+|---|---|---|---|
+| Objetivo | Comer y crecer | Devolver la pelota | Administrar 40 nodos de memoria |
+| Crecer | Solo alarga | No existe | Reserva un nodo real del heap, con límite |
+| Chocar | Pierdes | La pelota rebota | Te partes y dejas basura que ocupa memoria |
+| Pelota con física | No hay | Se golpea con la paleta | Rebota en tu cuerpo; atraparla permite limpiar memoria |
+| Puntaje | Por comida | Por golpe | n × n al limpiar n bloques en cadena |
+
+Tomamos de esos juegos solo el movimiento en cuadrícula y el rebote. La mecánica central, gestionar memoria, no aparece en ninguno.
 
 ---
 
 ## Cómo ejecutarlo
 
 1. Abre el IDE web de Nand2Tetris y entra al **VM Emulator**.
-2. Con el ícono de carpeta del panel **VM Code**, carga la carpeta **`LaRecolectora/`** (trae los `.vm` ya compilados).
+2. Con el ícono de carpeta del panel **VM Code**, carga la carpeta **`la-recolectora/LaRecolectora/`** (trae los `.vm` ya compilados).
 3. Comprueba que el código cargado empieza con `function Ball.new` y no con el ejemplo de Fibonacci.
 4. Lleva el control de velocidad **al extremo derecho (Fast)**. En la posición media el emulador ejecuta una sola instrucción cada 16 ms y el juego parece no hacer nada.
 5. Pulsa **Run** y activa el teclado del emulador.
@@ -53,7 +76,7 @@ Pierdes si chocas con un bloque negro, con tu cuerpo, con basura sin estar carga
 | Comportamiento físico modelado | Pelota con posición y velocidad en píxeles; reflexión especular eje por eje (`vx → −vx`, `vy → −vy`) contra paredes, basura, datos y el cuerpo de la serpiente | `Ball.step`, `Ball.probe` |
 | Visualización de puntaje | Marcador con puntos, memoria usada, estado del recolector y último combo; se redibuja solo cuando cambia | `Hud.update` |
 | Rigor de bajo nivel: memoria de video | Las celdas y la pelota se dibujan escribiendo directo en la RAM de pantalla (16384+) | `Gfx.cell`, `Gfx.ball` |
-| Rigor de bajo nivel: ciclos de instrucción | Medidos: ≈ 5.500 instrucciones VM por turno (mediana); 270 por celda dibujada | `tools/medir.py` |
+| Rigor de bajo nivel: ciclos de instrucción | Medidos: ≈ 5.500 instrucciones VM por turno (mediana); 270 por celda dibujada | `la-recolectora/tools/medir.py` |
 
 ---
 
@@ -85,7 +108,7 @@ Pierdes si chocas con un bloque negro, con tu cuerpo, con basura sin estar carga
 | `Node` | Nodo de la lista; lleva la cuenta de nodos vivos |
 | `World` | Cuadrícula de 32 × 15 celdas, basura, bus animado del borde |
 | `Ball` | Pelota recolectora con física de rebote |
-| `Gfx` | Sprites y dibujo directo en la memoria de video (generado por `tools/gen_gfx.py`) |
+| `Gfx` | Sprites y dibujo directo en la memoria de video (generado por `la-recolectora/tools/gen_gfx.py`) |
 | `Hud` | Marcador y pantallas de texto, sin fugas de `String` |
 | `Rng` | Generador congruencial lineal; semilla = vueltas hasta la primera tecla |
 
@@ -139,7 +162,7 @@ Como avanza como máximo 3 píxeles por paso y las celdas miden 16, nunca atravi
 
 ## Pruebas
 
-En `tools/` hay un intérprete de Jack, un compilador de Jack a VM y un intérprete de VM, con un sistema operativo simulado **estricto**: detiene la prueba ante accesos a memoria liberada, escrituras fuera de la pantalla, liberaciones dobles o coordenadas ilegales. Sobre eso, jugadores automáticos (uno cuidadoso, uno al azar y uno que acapara datos) juegan partidas completas.
+En `la-recolectora/tools/` hay un intérprete de Jack, un compilador de Jack a VM y un intérprete de VM, con un sistema operativo simulado **estricto**: detiene la prueba ante accesos a memoria liberada, escrituras fuera de la pantalla, liberaciones dobles o coordenadas ilegales. Sobre eso, jugadores automáticos (uno cuidadoso, uno al azar y uno que acapara datos) juegan partidas completas.
 
 En **cada turno** se verifica la lista enlazada, la cuadrícula, el contador de nodos, que no queden `String` vivos y **la pantalla palabra por palabra** contra lo esperado.
 
@@ -151,7 +174,7 @@ En **cada turno** se verifica la lista enlazada, la cuadrícula, el contador de 
 En esas partidas la pelota fue atrapada 699 veces, hubo 576 limpiezas en cadena (la mayor, de 20 bloques), la memoria llegó al límite de 40 nodos y aparecieron las cuatro formas de perder. La recursión más profunda observada fue de 29 llamadas.
 
 ```
-cd tools
+cd la-recolectora/tools
 python3 probar.py          # sobre el código Jack
 python3 probar.py --vm     # sobre los .vm compilados
 python3 medir.py           # instrucciones VM por turno y por celda
@@ -164,7 +187,9 @@ python3 compilar.py        # regenera los .vm
 ## Estructura del repositorio
 
 ```
-LaRecolectora/   código Jack (.jack) y compilado (.vm): esta carpeta se carga en el emulador
-docs/            capturas e instrucciones de juego
-tools/           generador de sprites, compilador, intérpretes, pruebas y mediciones (Python 3)
+README.md                      este archivo
+la-recolectora/
+├── LaRecolectora/             código Jack (.jack) y compilado (.vm): esta carpeta se carga en el emulador
+├── docs/                      capturas e instrucciones de juego
+└── tools/                     generador de sprites, compilador, intérpretes, pruebas y mediciones (Python 3)
 ```
