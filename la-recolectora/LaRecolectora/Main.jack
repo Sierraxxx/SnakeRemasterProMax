@@ -1,0 +1,22 @@
+/**
+ * LA RECOLECTORA - punto de entrada.
+ * Prepara los graficos, crea el juego, lo ejecuta y al salir libera TODA
+ * la memoria. La ultima pantalla muestra cuantos nodos quedaron vivos: 0.
+ */
+class Main {
+    function void main() {
+        var Game game;
+        do Node.init();
+        do Gfx.init();
+        let game = Game.new();
+        do game.run();
+        do game.dispose();
+        do Gfx.dispose();
+        // Prueba visible de limpieza de memoria
+        do Screen.clearScreen();
+        do Hud.say(9, 18, "Memoria liberada al salir.");
+        do Hud.say(11, 18, "Nodos vivos: ");
+        do Output.printInt(Node.getLive());
+        return;
+    }
+}

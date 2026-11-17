@@ -1,0 +1,476 @@
+/**
+ * Gfx - dibujo ESCRIBIENDO DIRECTAMENTE en la memoria de video de Hack.
+ *
+ * La pantalla es la RAM 16384..24575: 256 filas x 32 palabras de 16 bits.
+ * El bit 0 de cada palabra es el pixel de la izquierda.
+ *
+ * El campo usa celdas de 16x16 alineadas a palabras, asi que CADA FILA DE UNA
+ * CELDA ES EXACTAMENTE UNA PALABRA de memoria: dibujar una celda = 16 escrituras.
+ *   palabra de la celda (x, y), fila r = 512 + y*512 + r*32 + x
+ *   (512 = las 16 filas de pixeles del marcador; 32 palabras por fila)
+ *
+ * Archivo GENERADO por tools/gen_gfx.py (los dibujos estan alli como texto).
+ */
+class Gfx {
+    static Array screen;     // apunta a la RAM 16384: screen[i] = palabra i de la pantalla
+    static Array sprites;    // 10 sprites x 16 palabras
+    static Array ballL;      // pelota desplazada s bits: palabra izquierda  (16 x 6)
+    static Array ballR;      // pelota desplazada s bits: palabra derecha    (16 x 6)
+
+    /** Reserva las tablas y las llena. Se llama una sola vez al iniciar. */
+    function void init() {
+        let screen = 16384;
+        let sprites = Array.new(160);
+        let ballL = Array.new(96);
+        let ballR = Array.new(96);
+
+        // Sprite 0 = EMPTY: celda libre
+        let sprites[0] = 0;          // ................
+        let sprites[1] = 0;          // ................
+        let sprites[2] = 0;          // ................
+        let sprites[3] = 0;          // ................
+        let sprites[4] = 0;          // ................
+        let sprites[5] = 0;          // ................
+        let sprites[6] = 0;          // ................
+        let sprites[7] = 0;          // ................
+        let sprites[8] = 0;          // ................
+        let sprites[9] = 0;          // ................
+        let sprites[10] = 0;         // ................
+        let sprites[11] = 0;         // ................
+        let sprites[12] = 0;         // ................
+        let sprites[13] = 0;         // ................
+        let sprites[14] = 0;         // ................
+        let sprites[15] = 0;         // ................
+
+        // Sprite 1 = SOLID: pared solida (letal)
+        let sprites[16] = -1;        // ################
+        let sprites[17] = -1;        // ################
+        let sprites[18] = -1;        // ################
+        let sprites[19] = -1;        // ################
+        let sprites[20] = -1;        // ################
+        let sprites[21] = -1;        // ################
+        let sprites[22] = -1;        // ################
+        let sprites[23] = -1;        // ################
+        let sprites[24] = -1;        // ################
+        let sprites[25] = -1;        // ################
+        let sprites[26] = -1;        // ################
+        let sprites[27] = -1;        // ################
+        let sprites[28] = -1;        // ################
+        let sprites[29] = -1;        // ################
+        let sprites[30] = -1;        // ################
+        let sprites[31] = -1;        // ################
+
+        // Sprite 2 = BOUNCE: pared de rebote
+        let sprites[32] = -1;        // ################
+        let sprites[33] = -1;        // ################
+        let sprites[34] = -1;        // ################
+        let sprites[35] = -1;        // ################
+        let sprites[36] = -4081;     // ####........####
+        let sprites[37] = -4081;     // ####........####
+        let sprites[38] = -4081;     // ####........####
+        let sprites[39] = -4081;     // ####........####
+        let sprites[40] = -4081;     // ####........####
+        let sprites[41] = -4081;     // ####........####
+        let sprites[42] = -4081;     // ####........####
+        let sprites[43] = -4081;     // ####........####
+        let sprites[44] = -1;        // ################
+        let sprites[45] = -1;        // ################
+        let sprites[46] = -1;        // ################
+        let sprites[47] = -1;        // ################
+
+        // Sprite 3 = GARBAGE: basura: nodo sin liberar
+        let sprites[48] = 0;         // ................
+        let sprites[49] = 0;         // ................
+        let sprites[50] = 16380;     // ..############..
+        let sprites[51] = 16380;     // ..############..
+        let sprites[52] = 12300;     // ..##........##..
+        let sprites[53] = 12300;     // ..##........##..
+        let sprites[54] = 13260;     // ..##..####..##..
+        let sprites[55] = 13260;     // ..##..####..##..
+        let sprites[56] = 13260;     // ..##..####..##..
+        let sprites[57] = 13260;     // ..##..####..##..
+        let sprites[58] = 12300;     // ..##........##..
+        let sprites[59] = 12300;     // ..##........##..
+        let sprites[60] = 16380;     // ..############..
+        let sprites[61] = 16380;     // ..############..
+        let sprites[62] = 0;         // ................
+        let sprites[63] = 0;         // ................
+
+        // Sprite 4 = BODY: cuerpo de la serpiente
+        let sprites[64] = 0;         // ................
+        let sprites[65] = 32766;     // .##############.
+        let sprites[66] = 32766;     // .##############.
+        let sprites[67] = 32766;     // .##############.
+        let sprites[68] = 32766;     // .##############.
+        let sprites[69] = 32766;     // .##############.
+        let sprites[70] = 32766;     // .##############.
+        let sprites[71] = 32766;     // .##############.
+        let sprites[72] = 32766;     // .##############.
+        let sprites[73] = 32766;     // .##############.
+        let sprites[74] = 32766;     // .##############.
+        let sprites[75] = 32766;     // .##############.
+        let sprites[76] = 32766;     // .##############.
+        let sprites[77] = 32766;     // .##############.
+        let sprites[78] = 32766;     // .##############.
+        let sprites[79] = 0;         // ................
+
+        // Sprite 5 = DATA: dato (rombo)
+        let sprites[80] = 0;         // ................
+        let sprites[81] = 0;         // ................
+        let sprites[82] = 384;       // .......##.......
+        let sprites[83] = 960;       // ......####......
+        let sprites[84] = 2016;      // .....######.....
+        let sprites[85] = 4080;      // ....########....
+        let sprites[86] = 8184;      // ...##########...
+        let sprites[87] = 16380;     // ..############..
+        let sprites[88] = 16380;     // ..############..
+        let sprites[89] = 8184;      // ...##########...
+        let sprites[90] = 4080;      // ....########....
+        let sprites[91] = 2016;      // .....######.....
+        let sprites[92] = 960;       // ......####......
+        let sprites[93] = 384;       // .......##.......
+        let sprites[94] = 0;         // ................
+        let sprites[95] = 0;         // ................
+
+        // Sprite 6 = HEAD: cabeza
+        let sprites[96] = 0;         // ................
+        let sprites[97] = 32766;     // .##############.
+        let sprites[98] = 32766;     // .##############.
+        let sprites[99] = 25542;     // .##...####...##.
+        let sprites[100] = 25542;    // .##...####...##.
+        let sprites[101] = 25542;    // .##...####...##.
+        let sprites[102] = 32766;    // .##############.
+        let sprites[103] = 32766;    // .##############.
+        let sprites[104] = 32766;    // .##############.
+        let sprites[105] = 32766;    // .##############.
+        let sprites[106] = 32766;    // .##############.
+        let sprites[107] = 32766;    // .##############.
+        let sprites[108] = 32766;    // .##############.
+        let sprites[109] = 32766;    // .##############.
+        let sprites[110] = 32766;    // .##############.
+        let sprites[111] = 0;        // ................
+
+        // Sprite 7 = HEAD_CHARGED: cabeza cargada (boca abierta)
+        let sprites[112] = 0;        // ................
+        let sprites[113] = 32766;    // .##############.
+        let sprites[114] = 32766;    // .##############.
+        let sprites[115] = 25542;    // .##...####...##.
+        let sprites[116] = 25542;    // .##...####...##.
+        let sprites[117] = 25542;    // .##...####...##.
+        let sprites[118] = 32766;    // .##############.
+        let sprites[119] = 32766;    // .##############.
+        let sprites[120] = 32766;    // .##############.
+        let sprites[121] = 28686;    // .###........###.
+        let sprites[122] = 28686;    // .###........###.
+        let sprites[123] = 28686;    // .###........###.
+        let sprites[124] = 28686;    // .###........###.
+        let sprites[125] = 32766;    // .##############.
+        let sprites[126] = 32766;    // .##############.
+        let sprites[127] = 0;        // ................
+
+        // Sprite 8 = SOLID_LIT: pared solida con pulso del bus
+        let sprites[128] = 13107;    // ##..##..##..##..
+        let sprites[129] = 13107;    // ##..##..##..##..
+        let sprites[130] = -13108;   // ..##..##..##..##
+        let sprites[131] = -13108;   // ..##..##..##..##
+        let sprites[132] = 13107;    // ##..##..##..##..
+        let sprites[133] = 13107;    // ##..##..##..##..
+        let sprites[134] = -13108;   // ..##..##..##..##
+        let sprites[135] = -13108;   // ..##..##..##..##
+        let sprites[136] = 13107;    // ##..##..##..##..
+        let sprites[137] = 13107;    // ##..##..##..##..
+        let sprites[138] = -13108;   // ..##..##..##..##
+        let sprites[139] = -13108;   // ..##..##..##..##
+        let sprites[140] = 13107;    // ##..##..##..##..
+        let sprites[141] = 13107;    // ##..##..##..##..
+        let sprites[142] = -13108;   // ..##..##..##..##
+        let sprites[143] = -13108;   // ..##..##..##..##
+
+        // Sprite 9 = BOUNCE_LIT: pared de rebote con pulso del bus
+        let sprites[144] = 0;        // ................
+        let sprites[145] = 0;        // ................
+        let sprites[146] = 0;        // ................
+        let sprites[147] = 0;        // ................
+        let sprites[148] = 4080;     // ....########....
+        let sprites[149] = 4080;     // ....########....
+        let sprites[150] = 4080;     // ....########....
+        let sprites[151] = 4080;     // ....########....
+        let sprites[152] = 4080;     // ....########....
+        let sprites[153] = 4080;     // ....########....
+        let sprites[154] = 4080;     // ....########....
+        let sprites[155] = 4080;     // ....########....
+        let sprites[156] = 0;        // ................
+        let sprites[157] = 0;        // ................
+        let sprites[158] = 0;        // ................
+        let sprites[159] = 0;        // ................
+
+        // Pelota de 6x6 pixeles:
+        //   .####.
+        //   ######
+        //   ######
+        //   ######
+        //   ######
+        //   .####.
+        // Hack no tiene instruccion de desplazamiento de bits, asi que la pelota se
+        // guarda ya desplazada para cada una de las 16 posiciones dentro de una palabra.
+        // ballL[s*6 + fila] = parte que cae en la palabra de la izquierda
+        // ballR[s*6 + fila] = parte que se pasa a la palabra de la derecha (solo si s > 10)
+        let ballL[0] = 30;
+        let ballL[1] = 63;
+        let ballL[2] = 63;
+        let ballL[3] = 63;
+        let ballL[4] = 63;
+        let ballL[5] = 30;
+        let ballL[6] = 60;
+        let ballL[7] = 126;
+        let ballL[8] = 126;
+        let ballL[9] = 126;
+        let ballL[10] = 126;
+        let ballL[11] = 60;
+        let ballL[12] = 120;
+        let ballL[13] = 252;
+        let ballL[14] = 252;
+        let ballL[15] = 252;
+        let ballL[16] = 252;
+        let ballL[17] = 120;
+        let ballL[18] = 240;
+        let ballL[19] = 504;
+        let ballL[20] = 504;
+        let ballL[21] = 504;
+        let ballL[22] = 504;
+        let ballL[23] = 240;
+        let ballL[24] = 480;
+        let ballL[25] = 1008;
+        let ballL[26] = 1008;
+        let ballL[27] = 1008;
+        let ballL[28] = 1008;
+        let ballL[29] = 480;
+        let ballL[30] = 960;
+        let ballL[31] = 2016;
+        let ballL[32] = 2016;
+        let ballL[33] = 2016;
+        let ballL[34] = 2016;
+        let ballL[35] = 960;
+        let ballL[36] = 1920;
+        let ballL[37] = 4032;
+        let ballL[38] = 4032;
+        let ballL[39] = 4032;
+        let ballL[40] = 4032;
+        let ballL[41] = 1920;
+        let ballL[42] = 3840;
+        let ballL[43] = 8064;
+        let ballL[44] = 8064;
+        let ballL[45] = 8064;
+        let ballL[46] = 8064;
+        let ballL[47] = 3840;
+        let ballL[48] = 7680;
+        let ballL[49] = 16128;
+        let ballL[50] = 16128;
+        let ballL[51] = 16128;
+        let ballL[52] = 16128;
+        let ballL[53] = 7680;
+        let ballL[54] = 15360;
+        let ballL[55] = 32256;
+        let ballL[56] = 32256;
+        let ballL[57] = 32256;
+        let ballL[58] = 32256;
+        let ballL[59] = 15360;
+        let ballL[60] = 30720;
+        let ballL[61] = -1024;
+        let ballL[62] = -1024;
+        let ballL[63] = -1024;
+        let ballL[64] = -1024;
+        let ballL[65] = 30720;
+        let ballL[66] = -4096;
+        let ballL[67] = -2048;
+        let ballL[68] = -2048;
+        let ballL[69] = -2048;
+        let ballL[70] = -2048;
+        let ballL[71] = -4096;
+        let ballL[72] = -8192;
+        let ballL[73] = -4096;
+        let ballL[74] = -4096;
+        let ballL[75] = -4096;
+        let ballL[76] = -4096;
+        let ballL[77] = -8192;
+        let ballL[78] = -16384;
+        let ballL[79] = -8192;
+        let ballL[80] = -8192;
+        let ballL[81] = -8192;
+        let ballL[82] = -8192;
+        let ballL[83] = -16384;
+        let ballL[84] = -32767 - 1;
+        let ballL[85] = -16384;
+        let ballL[86] = -16384;
+        let ballL[87] = -16384;
+        let ballL[88] = -16384;
+        let ballL[89] = -32767 - 1;
+        let ballL[90] = 0;
+        let ballL[91] = -32767 - 1;
+        let ballL[92] = -32767 - 1;
+        let ballL[93] = -32767 - 1;
+        let ballL[94] = -32767 - 1;
+        let ballL[95] = 0;
+        let ballR[0] = 0;
+        let ballR[1] = 0;
+        let ballR[2] = 0;
+        let ballR[3] = 0;
+        let ballR[4] = 0;
+        let ballR[5] = 0;
+        let ballR[6] = 0;
+        let ballR[7] = 0;
+        let ballR[8] = 0;
+        let ballR[9] = 0;
+        let ballR[10] = 0;
+        let ballR[11] = 0;
+        let ballR[12] = 0;
+        let ballR[13] = 0;
+        let ballR[14] = 0;
+        let ballR[15] = 0;
+        let ballR[16] = 0;
+        let ballR[17] = 0;
+        let ballR[18] = 0;
+        let ballR[19] = 0;
+        let ballR[20] = 0;
+        let ballR[21] = 0;
+        let ballR[22] = 0;
+        let ballR[23] = 0;
+        let ballR[24] = 0;
+        let ballR[25] = 0;
+        let ballR[26] = 0;
+        let ballR[27] = 0;
+        let ballR[28] = 0;
+        let ballR[29] = 0;
+        let ballR[30] = 0;
+        let ballR[31] = 0;
+        let ballR[32] = 0;
+        let ballR[33] = 0;
+        let ballR[34] = 0;
+        let ballR[35] = 0;
+        let ballR[36] = 0;
+        let ballR[37] = 0;
+        let ballR[38] = 0;
+        let ballR[39] = 0;
+        let ballR[40] = 0;
+        let ballR[41] = 0;
+        let ballR[42] = 0;
+        let ballR[43] = 0;
+        let ballR[44] = 0;
+        let ballR[45] = 0;
+        let ballR[46] = 0;
+        let ballR[47] = 0;
+        let ballR[48] = 0;
+        let ballR[49] = 0;
+        let ballR[50] = 0;
+        let ballR[51] = 0;
+        let ballR[52] = 0;
+        let ballR[53] = 0;
+        let ballR[54] = 0;
+        let ballR[55] = 0;
+        let ballR[56] = 0;
+        let ballR[57] = 0;
+        let ballR[58] = 0;
+        let ballR[59] = 0;
+        let ballR[60] = 0;
+        let ballR[61] = 0;
+        let ballR[62] = 0;
+        let ballR[63] = 0;
+        let ballR[64] = 0;
+        let ballR[65] = 0;
+        let ballR[66] = 0;
+        let ballR[67] = 1;
+        let ballR[68] = 1;
+        let ballR[69] = 1;
+        let ballR[70] = 1;
+        let ballR[71] = 0;
+        let ballR[72] = 1;
+        let ballR[73] = 3;
+        let ballR[74] = 3;
+        let ballR[75] = 3;
+        let ballR[76] = 3;
+        let ballR[77] = 1;
+        let ballR[78] = 3;
+        let ballR[79] = 7;
+        let ballR[80] = 7;
+        let ballR[81] = 7;
+        let ballR[82] = 7;
+        let ballR[83] = 3;
+        let ballR[84] = 7;
+        let ballR[85] = 15;
+        let ballR[86] = 15;
+        let ballR[87] = 15;
+        let ballR[88] = 15;
+        let ballR[89] = 7;
+        let ballR[90] = 15;
+        let ballR[91] = 31;
+        let ballR[92] = 31;
+        let ballR[93] = 31;
+        let ballR[94] = 31;
+        let ballR[95] = 15;
+        return;
+    }
+
+    /**
+     * Dibuja el sprite id en la celda (x, y) del campo.
+     * Desenrollado a mano: 16 escrituras seguidas sin bucle, porque un bucle
+     * gasta casi el doble de instrucciones VM en el contador y la comparacion.
+     */
+    function void cell(int x, int y, int id) {
+        var int a, b;
+        let a = 512 + (y * 512) + x;
+        let b = id * 16;
+        let screen[a + 0] = sprites[b + 0];
+        let screen[a + 32] = sprites[b + 1];
+        let screen[a + 64] = sprites[b + 2];
+        let screen[a + 96] = sprites[b + 3];
+        let screen[a + 128] = sprites[b + 4];
+        let screen[a + 160] = sprites[b + 5];
+        let screen[a + 192] = sprites[b + 6];
+        let screen[a + 224] = sprites[b + 7];
+        let screen[a + 256] = sprites[b + 8];
+        let screen[a + 288] = sprites[b + 9];
+        let screen[a + 320] = sprites[b + 10];
+        let screen[a + 352] = sprites[b + 11];
+        let screen[a + 384] = sprites[b + 12];
+        let screen[a + 416] = sprites[b + 13];
+        let screen[a + 448] = sprites[b + 14];
+        let screen[a + 480] = sprites[b + 15];
+        return;
+    }
+
+    /**
+     * Dibuja (on = true) o borra (on = false) la pelota con centro (bx, by) en pixeles.
+     * Esquina superior izquierda: (bx - 3, by - 3). Ocupa 6 filas.
+     * Solo toca palabras de celdas LIBRES (la fisica de Ball lo garantiza),
+     * por eso puede escribir palabras completas sin danar nada.
+     */
+    function void ball(int bx, int by, boolean on) {
+        var int x0, s, a, t, r;
+        let x0 = bx - 3;
+        let s = x0 & 15;                         // posicion del primer pixel dentro de su palabra
+        let a = ((by - 3) * 32) + (x0 / 16);     // palabra de la primera fila
+        let t = s * 6;
+        let r = 0;
+        while (r < 6) {
+            if (on) {
+                let screen[a] = ballL[t];
+                if (s > 10) { let screen[a + 1] = ballR[t]; }
+            } else {
+                let screen[a] = 0;
+                if (s > 10) { let screen[a + 1] = 0; }
+            }
+            let a = a + 32;
+            let t = t + 1;
+            let r = r + 1;
+        }
+        return;
+    }
+
+    /** LIMPIEZA DE MEMORIA: libera las tres tablas. */
+    function void dispose() {
+        do sprites.dispose();
+        do ballL.dispose();
+        do ballR.dispose();
+        return;
+    }
+}

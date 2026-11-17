@@ -1,0 +1,561 @@
+function Snake.new 0
+push constant 5
+call Memory.alloc 1
+pop pointer 0
+push argument 0
+pop this 4
+push constant 0
+pop this 0
+push constant 0
+pop this 1
+push constant 0
+pop this 2
+push constant 4
+pop this 3
+push pointer 0
+return
+function Snake.reset 4
+push argument 0
+pop pointer 0
+push this 1
+push constant 0
+eq
+not
+not
+if-goto Snake_L1
+push this 1
+call Node.disposeAll 1
+pop local 3
+goto Snake_L2
+label Snake_L1
+label Snake_L2
+push argument 1
+push constant 2
+sub
+push argument 2
+call Node.new 2
+pop local 0
+push argument 1
+push constant 1
+sub
+push argument 2
+call Node.new 2
+pop local 1
+push argument 1
+push argument 2
+call Node.new 2
+pop local 2
+push local 0
+push local 1
+call Node.setNext 2
+pop temp 0
+push local 1
+push local 2
+call Node.setNext 2
+pop temp 0
+push local 0
+pop this 1
+push local 2
+pop this 0
+push constant 3
+pop this 2
+push constant 4
+pop this 3
+push this 4
+push argument 1
+push constant 2
+sub
+push argument 2
+push constant 4
+call World.set 4
+pop temp 0
+push this 4
+push argument 1
+push constant 1
+sub
+push argument 2
+push constant 4
+call World.set 4
+pop temp 0
+push this 4
+push argument 1
+push argument 2
+push constant 4
+call World.set 4
+pop temp 0
+push constant 0
+return
+function Snake.getLength 0
+push argument 0
+pop pointer 0
+push this 2
+return
+function Snake.getHeadX 0
+push argument 0
+pop pointer 0
+push this 0
+call Node.getX 1
+return
+function Snake.getHeadY 0
+push argument 0
+pop pointer 0
+push this 0
+call Node.getY 1
+return
+function Snake.setDirection 0
+push argument 0
+pop pointer 0
+push argument 1
+push constant 1
+eq
+push this 3
+push constant 2
+eq
+not
+and
+not
+if-goto Snake_L3
+push constant 1
+pop this 3
+goto Snake_L4
+label Snake_L3
+label Snake_L4
+push argument 1
+push constant 2
+eq
+push this 3
+push constant 1
+eq
+not
+and
+not
+if-goto Snake_L5
+push constant 2
+pop this 3
+goto Snake_L6
+label Snake_L5
+label Snake_L6
+push argument 1
+push constant 3
+eq
+push this 3
+push constant 4
+eq
+not
+and
+not
+if-goto Snake_L7
+push constant 3
+pop this 3
+goto Snake_L8
+label Snake_L7
+label Snake_L8
+push argument 1
+push constant 4
+eq
+push this 3
+push constant 3
+eq
+not
+and
+not
+if-goto Snake_L9
+push constant 4
+pop this 3
+goto Snake_L10
+label Snake_L9
+label Snake_L10
+push constant 0
+return
+function Snake.nextX 0
+push argument 0
+pop pointer 0
+push this 3
+push constant 3
+eq
+not
+if-goto Snake_L11
+push this 0
+call Node.getX 1
+push constant 1
+sub
+return
+goto Snake_L12
+label Snake_L11
+label Snake_L12
+push this 3
+push constant 4
+eq
+not
+if-goto Snake_L13
+push this 0
+call Node.getX 1
+push constant 1
+add
+return
+goto Snake_L14
+label Snake_L13
+label Snake_L14
+push this 0
+call Node.getX 1
+return
+function Snake.nextY 0
+push argument 0
+pop pointer 0
+push this 3
+push constant 1
+eq
+not
+if-goto Snake_L15
+push this 0
+call Node.getY 1
+push constant 1
+sub
+return
+goto Snake_L16
+label Snake_L15
+label Snake_L16
+push this 3
+push constant 2
+eq
+not
+if-goto Snake_L17
+push this 0
+call Node.getY 1
+push constant 1
+add
+return
+goto Snake_L18
+label Snake_L17
+label Snake_L18
+push this 0
+call Node.getY 1
+return
+function Snake.isTail 0
+push argument 0
+pop pointer 0
+push this 1
+call Node.getX 1
+push argument 1
+eq
+push this 1
+call Node.getY 1
+push argument 2
+eq
+and
+return
+function Snake.drawHead 0
+push argument 0
+pop pointer 0
+push argument 1
+not
+if-goto Snake_L19
+push this 0
+call Node.getX 1
+push this 0
+call Node.getY 1
+push constant 7
+call Gfx.cell 3
+pop temp 0
+goto Snake_L20
+label Snake_L19
+push this 0
+call Node.getX 1
+push this 0
+call Node.getY 1
+push constant 6
+call Gfx.cell 3
+pop temp 0
+label Snake_L20
+push constant 0
+return
+function Snake.step 3
+push argument 0
+pop pointer 0
+push pointer 0
+call Snake.nextX 1
+pop local 0
+push pointer 0
+call Snake.nextY 1
+pop local 1
+push this 0
+call Node.getX 1
+push this 0
+call Node.getY 1
+push constant 4
+call Gfx.cell 3
+pop temp 0
+push argument 1
+not
+if-goto Snake_L21
+push local 0
+push local 1
+call Node.new 2
+pop local 2
+push this 2
+push constant 1
+add
+pop this 2
+goto Snake_L22
+label Snake_L21
+push this 1
+pop local 2
+push this 4
+push local 2
+call Node.getX 1
+push local 2
+call Node.getY 1
+call World.clearCell 3
+pop temp 0
+push local 2
+call Node.getNext 1
+pop this 1
+push local 2
+push constant 0
+call Node.setNext 2
+pop temp 0
+push local 2
+push local 0
+push local 1
+call Node.setPos 3
+pop temp 0
+label Snake_L22
+push this 0
+push local 2
+call Node.setNext 2
+pop temp 0
+push local 2
+pop this 0
+push this 4
+push local 0
+push local 1
+push constant 4
+call World.set 4
+pop temp 0
+push pointer 0
+push argument 2
+call Snake.drawHead 2
+pop temp 0
+push constant 0
+return
+function Snake.bounce 10
+push argument 0
+pop pointer 0
+push this 2
+push constant 1
+add
+push constant 2
+call Math.divide 2
+pop local 0
+push local 0
+push constant 3
+lt
+not
+if-goto Snake_L23
+push constant 3
+pop local 0
+goto Snake_L24
+label Snake_L23
+label Snake_L24
+push local 0
+push this 2
+gt
+not
+if-goto Snake_L25
+push this 2
+pop local 0
+goto Snake_L26
+label Snake_L25
+label Snake_L26
+push this 1
+pop local 5
+push constant 1
+pop local 1
+label Snake_L27
+push local 1
+push local 0
+lt
+not
+if-goto Snake_L28
+push local 5
+call Node.getNext 1
+pop local 5
+push local 1
+push constant 1
+add
+pop local 1
+goto Snake_L27
+label Snake_L28
+push local 5
+call Node.getNext 1
+pop local 6
+push local 5
+push constant 0
+call Node.setNext 2
+pop temp 0
+push constant 0
+pop local 2
+label Snake_L29
+push local 6
+push constant 0
+eq
+not
+not
+if-goto Snake_L30
+push local 6
+call Node.getNext 1
+pop local 7
+push local 6
+push constant 0
+call Node.setNext 2
+pop temp 0
+push this 4
+push local 6
+call World.putGarbage 2
+pop temp 0
+push local 7
+pop local 6
+push local 2
+push constant 1
+add
+pop local 2
+goto Snake_L29
+label Snake_L30
+push local 2
+push constant 0
+eq
+not
+if-goto Snake_L31
+push this 0
+call Node.getX 1
+push this 0
+call Node.getY 1
+push constant 4
+call Gfx.cell 3
+pop temp 0
+goto Snake_L32
+label Snake_L31
+label Snake_L32
+push this 1
+call Node.getNext 1
+pop local 8
+push this 1
+call Node.getX 1
+push local 8
+call Node.getX 1
+sub
+pop local 3
+push this 1
+call Node.getY 1
+push local 8
+call Node.getY 1
+sub
+pop local 4
+push local 3
+push constant 1
+eq
+not
+if-goto Snake_L33
+push constant 4
+pop this 3
+goto Snake_L34
+label Snake_L33
+label Snake_L34
+push local 3
+push constant 1
+neg
+eq
+not
+if-goto Snake_L35
+push constant 3
+pop this 3
+goto Snake_L36
+label Snake_L35
+label Snake_L36
+push local 4
+push constant 1
+eq
+not
+if-goto Snake_L37
+push constant 2
+pop this 3
+goto Snake_L38
+label Snake_L37
+label Snake_L38
+push local 4
+push constant 1
+neg
+eq
+not
+if-goto Snake_L39
+push constant 1
+pop this 3
+goto Snake_L40
+label Snake_L39
+label Snake_L40
+push this 1
+push constant 0
+call Node.reverse 2
+pop local 9
+push this 1
+pop this 0
+push local 9
+pop this 1
+push local 0
+pop this 2
+push pointer 0
+push argument 1
+call Snake.drawHead 2
+pop temp 0
+push local 2
+return
+function Snake.drawFull 1
+push argument 0
+pop pointer 0
+push this 1
+pop local 0
+label Snake_L41
+push local 0
+push constant 0
+eq
+not
+not
+if-goto Snake_L42
+push local 0
+call Node.getX 1
+push local 0
+call Node.getY 1
+push constant 4
+call Gfx.cell 3
+pop temp 0
+push local 0
+call Node.getNext 1
+pop local 0
+goto Snake_L41
+label Snake_L42
+push pointer 0
+push argument 1
+call Snake.drawHead 2
+pop temp 0
+push constant 0
+return
+function Snake.dispose 1
+push argument 0
+pop pointer 0
+push this 1
+push constant 0
+eq
+not
+not
+if-goto Snake_L43
+push this 1
+call Node.disposeAll 1
+pop local 0
+goto Snake_L44
+label Snake_L43
+label Snake_L44
+push pointer 0
+call Memory.deAlloc 1
+pop temp 0
+push constant 0
+return

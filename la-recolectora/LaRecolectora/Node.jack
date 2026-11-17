@@ -1,0 +1,88 @@
+/**
+ * Nodo de lista enlazada. Cada segmento de la serpiente y cada bloque de
+ * basura ES un Node reservado en el heap con Memory.alloc (via constructor).
+ *
+ * "live" cuenta los nodos vivos: sube en new() y baja en dispose().
+ * Ese contador es el medidor "Mem" que se ve en pantalla.
+ *
+ * Aqui estan dos de las tres funciones RECURSIVAS del juego:
+ *   reverse()    -> invierte la lista (rebote de la serpiente)
+ *   disposeAll() -> libera la lista completa
+ */
+class Node {
+    field int x, y;
+    field Node next;
+    static int live;
+
+    function void init() {
+        let live = 0;
+        return;
+    }
+
+    function int getLive() {
+        return live;
+    }
+
+    constructor Node new(int ax, int ay) {
+        let x = ax;
+        let y = ay;
+        let next = null;
+        let live = live + 1;
+        return this;
+    }
+
+    method int getX() { return x; }
+    method int getY() { return y; }
+    method Node getNext() { return next; }
+
+    method void setNext(Node n) {
+        let next = n;
+        return;
+    }
+
+    method void setPos(int ax, int ay) {
+        let x = ax;
+        let y = ay;
+        return;
+    }
+
+    /**
+     * RECURSIVA. Invierte la lista que empieza en este nodo.
+     * prev = nodo que debe quedar DESPUES de este (null en la primera llamada).
+     * Devuelve el primer nodo de la lista ya invertida.
+     *   Caso base:      no hay mas nodos -> este es el nuevo primero.
+     *   Caso recursivo: apunto hacia atras y le pido al resto que se invierta.
+     */
+    method Node reverse(Node prev) {
+        var Node rest;
+        let rest = next;
+        let next = prev;
+        if (rest = null) {
+            return this;
+        }
+        return rest.reverse(this);
+    }
+
+    /**
+     * RECURSIVA. Libera este nodo y todos los que le siguen.
+     * Devuelve cuantos nodos libero.
+     *   Caso base:      no hay siguiente -> me libero yo (1).
+     *   Caso recursivo: primero se libera el resto, luego yo.
+     */
+    method int disposeAll() {
+        var int n;
+        let n = 0;
+        if (~(next = null)) {
+            let n = next.disposeAll();
+        }
+        do dispose();
+        return n + 1;
+    }
+
+    /** Libera SOLO este nodo. */
+    method void dispose() {
+        let live = live - 1;
+        do Memory.deAlloc(this);
+        return;
+    }
+}

@@ -1,0 +1,301 @@
+/**
+ * Game - nucleo de LA RECOLECTORA.
+ *
+ * Un turno (tick):
+ *   1. Esperar el tiempo del turno LEYENDO el teclado sin bloquear.
+ *   2. Borrar la pelota.
+ *   3. Mover la serpiente y resolver lo que haya en la celda de adelante.
+ *   4. Fisica de la pelota (2 pasos) y dibujarla.
+ *   5. Avanzar el bus del borde (fondo dinamico).
+ * En cada turno solo se redibujan unas 10 celdas, escribiendo directo
+ * en la memoria de video (ver Gfx).
+ */
+class Game {
+    field Snake snake;
+    field World world;
+    field Ball ball;
+    field Rng rng;
+
+    field int score;
+    field int combo;            // tamano de la ultima limpieza
+    field boolean charged;      // la cabeza tiene un recolector listo
+    field boolean quit;
+    field int bufferedDir;
+    field int lastKey;          // para detectar "tecla recien pulsada"
+
+    field int fruitPos, fruitTimer;   // posicion del dato (y*32+x) o -1, y turnos restantes
+    field int ballTimer;              // turnos hasta que aparezca la pelota
+
+    static int LIMIT;           // maximo de nodos vivos (serpiente + basura)
+
+    constructor Game new() {
+        let LIMIT = 40;
+        let rng = Rng.new(12345);
+        let world = World.new();
+        let snake = Snake.new(world);
+        let ball = Ball.new();
+        let quit = false;
+        let lastKey = 0;
+        return this;
+    }
+
+    /** Titulo -> partidas -> salir. */
+    method void run() {
+        var boolean again;
+        do rng.setSeed(Hud.showStart());
+        let again = true;
+        while (again) {
+            let again = playSession();
+        }
+        return;
+    }
+
+    /** Una partida completa. Devuelve true si hay que jugar otra. */
+    method boolean playSession() {
+        var int reason;
+
+        let score = 0;
+        let combo = 0;
+        let charged = false;
+        let quit = false;
+        let bufferedDir = 0;
+        let fruitPos = -1;
+        let fruitTimer = 0;
+        let ballTimer = 10;
+        do ball.deactivate();
+
+        do Screen.clearScreen();
+        do world.reset();               // libera la basura de la partida anterior
+        do snake.reset(6, 7);           // libera la serpiente anterior
+        do world.drawAll();
+        do snake.drawFull(charged);
+        do refreshHud();
+
+        let reason = 0;
+        while ((reason = 0) & (~quit)) {
+            do tickItems();
+            do waitTurn();
+            if (~quit) {
+                do ball.erase();
+                let reason = advance();
+                if (reason = 0) {
+                    do moveBall();
+                    do world.animate();
+                }
+            }
+        }
+        if (quit) {
+            return false;
+        }
+        return Hud.showGameOver(score, reason);
+    }
+
+    method void refreshHud() {
+        do Hud.update(score, Node.getLive(), LIMIT, charged, combo);
+        return;
+    }
+
+    /** La serpiente atrapa la pelota: queda cargada. */
+    method void catchBall() {
+        do ball.deactivate();
+        let charged = true;
+        let score = score + 5;
+        do snake.drawHead(charged);
+        do refreshHud();
+        return;
+    }
+
+    /** Dos pasos de fisica por turno y dibujo de la pelota. */
+    method void moveBall() {
+        var int i;
+        if (~ball.isActive()) {
+            return;
+        }
+        let i = 0;
+        while (i < 2) {
+            if (ball.step(world, snake.getHeadX(), snake.getHeadY())) {
+                do catchBall();
+                return;
+            }
+            let i = i + 1;
+        }
+        do ball.draw();
+        return;
+    }
+
+    /**
+     * Mueve la serpiente un turno.
+     * Devuelve 0 si sigue viva, o el motivo de muerte (1..4).
+     */
+    method int advance() {
+        var int nx, ny, t, n;
+
+        if (~(bufferedDir = 0)) {
+            do snake.setDirection(bufferedDir);
+            let bufferedDir = 0;
+        }
+        let nx = snake.nextX();
+        let ny = snake.nextY();
+        let t = world.get(nx, ny);
+
+        if (t = 1) {                                    // pared solida
+            return 1;
+        }
+        if (t = 2) {                                    // rebote: fragmentacion
+            let n = snake.bounce(charged);
+            do refreshHud();
+            return 0;
+        }
+        if (t = 3) {                                    // basura
+            if (~charged) {
+                return 2;
+            }
+            // LIMPIEZA EN CADENA (recursiva). Puntos = n * n.
+            let n = world.sweep(nx, ny);
+            let combo = n;
+            let score = score + (n * n);
+            if (score < 0) { let score = 32767; }
+            let charged = false;
+            let ballTimer = 15;
+            do snake.drawHead(charged);
+            do refreshHud();
+            return 0;
+        }
+        if (t = 4) {                                    // cuerpo propio
+            if (~snake.isTail(nx, ny)) {
+                return 3;
+            }
+            // la cola se quita justo a tiempo: se puede avanzar
+        }
+        if (t = 5) {                                    // dato: crecer pide memoria
+            if (~(Node.getLive() < LIMIT)) {
+                return 4;
+            }
+            do snake.step(true, charged);
+            let score = score + 10;
+            if (score < 0) { let score = 32767; }
+            let fruitPos = -1;
+            do refreshHud();
+        } else {
+            do snake.step(false, charged);
+        }
+        // Atrapar la pelota con la cabeza
+        if (ball.overlapsCell(nx, ny)) {
+            do catchBall();
+        }
+        return 0;
+    }
+
+    /** Aparicion y caducidad del dato y de la pelota. */
+    method void tickItems() {
+        var int y, c;
+        // Dato: siempre debe haber uno; si lleva mucho sin comerse, se muda.
+        if (fruitPos < 0) {
+            let fruitPos = world.spawnData(rng, ball);
+            let fruitTimer = 150;
+        } else {
+            let fruitTimer = fruitTimer - 1;
+            if (fruitTimer < 1) {
+                let y = fruitPos / 32;
+                do world.clearIfType(fruitPos - (y * 32), y, 5);
+                let fruitPos = -1;
+            }
+        }
+        // Pelota: aparece si no esta en juego y no estas cargada.
+        if ((~ball.isActive()) & (~charged)) {
+            let ballTimer = ballTimer - 1;
+            if (ballTimer < 1) {
+                let c = world.freeCellFar(rng, snake.getHeadX(), snake.getHeadY());
+                if (c > -1) {
+                    let y = c / 32;
+                    do ball.spawn(c - (y * 32), y, randomSpeed(), randomSpeed());
+                    do ball.draw();
+                }
+                let ballTimer = 10;
+            }
+        }
+        return;
+    }
+
+    /** Velocidad al azar: -3, -2, 2 o 3 pixeles por paso. */
+    method int randomSpeed() {
+        var int r;
+        let r = rng.nextRange(4);
+        if (r = 0) { return -3; }
+        if (r = 1) { return -2; }
+        if (r = 2) { return 2; }
+        return 3;
+    }
+
+    /**
+     * Espera el turno LEYENDO EL TECLADO SIN BLOQUEAR: en tramos de 30 ms
+     * se consulta Keyboard.keyPressed() y se guarda la ultima flecha.
+     * El turno se acorta a medida que sube el puntaje.
+     */
+    method void waitTurn() {
+        var int elapsed, delay;
+        let delay = 120 - ((score / 100) * 10);
+        if (delay < 60) { let delay = 60; }
+        let elapsed = 0;
+        while (elapsed < delay) {
+            do readKey();
+            if (quit) {
+                return;
+            }
+            do Sys.wait(30);
+            let elapsed = elapsed + 30;
+        }
+        do readKey();
+        return;
+    }
+
+    /** Lee una tecla. Flechas: 130 Izq, 131 Arr, 132 Der, 133 Aba. */
+    method void readKey() {
+        var char key;
+        let key = Keyboard.keyPressed();
+        if (key = 131) { let bufferedDir = 1; }
+        if (key = 133) { let bufferedDir = 2; }
+        if (key = 130) { let bufferedDir = 3; }
+        if (key = 132) { let bufferedDir = 4; }
+        // Las teclas de control solo actuan al pulsarse (no mientras se mantienen)
+        if (~(key = lastKey)) {
+            let lastKey = key;
+            if ((key = 81) | (key = 113)) {             // Q: salir
+                let quit = true;
+            }
+            if ((key = 80) | (key = 112)) {             // P: pausa
+                do pause();
+            }
+        }
+        return;
+    }
+
+    /** Pausa hasta que se vuelva a pulsar P (o Q para salir). */
+    method void pause() {
+        var char key;
+        do Hud.showPause();
+        while (~(Keyboard.keyPressed() = 0)) { }        // soltar la P
+        let key = 0;
+        while (~((key = 80) | (key = 112) | (key = 81) | (key = 113))) {
+            let key = Keyboard.keyPressed();
+        }
+        if ((key = 81) | (key = 113)) {
+            let quit = true;
+        }
+        while (~(Keyboard.keyPressed() = 0)) { }
+        let lastKey = 0;
+        let bufferedDir = 0;
+        do refreshHud();
+        return;
+    }
+
+    /** LIMPIEZA DE MEMORIA: libera todo lo que el juego reservo. */
+    method void dispose() {
+        do snake.dispose();
+        do world.dispose();
+        do ball.dispose();
+        do rng.dispose();
+        do Memory.deAlloc(this);
+        return;
+    }
+}

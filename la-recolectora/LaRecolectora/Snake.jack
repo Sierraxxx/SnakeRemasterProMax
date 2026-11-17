@@ -1,0 +1,201 @@
+/**
+ * Snake - la serpiente es una LISTA ENLAZADA de Node:
+ *
+ *     tail -> ... -> ... -> head        (cada nodo apunta hacia la cabeza)
+ *
+ * Avanzar sin crecer NO pide memoria: el nodo de la cola se recicla como
+ * nueva cabeza. Solo crecer (comer un dato) crea un Node nuevo.
+ *
+ * Direcciones: 1 = Arriba, 2 = Abajo, 3 = Izquierda, 4 = Derecha
+ */
+class Snake {
+    field Node head;
+    field Node tail;
+    field int len;
+    field int dir;
+    field World world;      // referencia prestada: NO se libera aqui
+
+    constructor Snake new(World w) {
+        let world = w;
+        let head = null;
+        let tail = null;
+        let len = 0;
+        let dir = 4;
+        return this;
+    }
+
+    /**
+     * Coloca una serpiente nueva de 3 segmentos mirando a la derecha.
+     * LIMPIEZA DE MEMORIA: antes libera la serpiente anterior completa
+     * con la funcion recursiva Node.disposeAll().
+     */
+    method void reset(int sx, int sy) {
+        var Node a, b, c;
+        var int freed;
+        if (~(tail = null)) {
+            let freed = tail.disposeAll();
+        }
+        let a = Node.new(sx - 2, sy);
+        let b = Node.new(sx - 1, sy);
+        let c = Node.new(sx, sy);
+        do a.setNext(b);
+        do b.setNext(c);
+        let tail = a;
+        let head = c;
+        let len = 3;
+        let dir = 4;
+        do world.set(sx - 2, sy, 4);
+        do world.set(sx - 1, sy, 4);
+        do world.set(sx, sy, 4);
+        return;
+    }
+
+    method int getLength() { return len; }
+    method int getHeadX() { return head.getX(); }
+    method int getHeadY() { return head.getY(); }
+
+    /** Cambia direccion evitando giros de 180 grados. */
+    method void setDirection(int d) {
+        if ((d = 1) & (~(dir = 2))) { let dir = 1; }
+        if ((d = 2) & (~(dir = 1))) { let dir = 2; }
+        if ((d = 3) & (~(dir = 4))) { let dir = 3; }
+        if ((d = 4) & (~(dir = 3))) { let dir = 4; }
+        return;
+    }
+
+    method int nextX() {
+        if (dir = 3) { return head.getX() - 1; }
+        if (dir = 4) { return head.getX() + 1; }
+        return head.getX();
+    }
+
+    method int nextY() {
+        if (dir = 1) { return head.getY() - 1; }
+        if (dir = 2) { return head.getY() + 1; }
+        return head.getY();
+    }
+
+    /** true si (x, y) es la punta de la cola (que se va a mover este turno). */
+    method boolean isTail(int x, int y) {
+        return (tail.getX() = x) & (tail.getY() = y);
+    }
+
+    /** Dibuja la cabeza con su sprite (6 normal, 7 cargada). */
+    method void drawHead(boolean charged) {
+        if (charged) {
+            do Gfx.cell(head.getX(), head.getY(), 7);
+        } else {
+            do Gfx.cell(head.getX(), head.getY(), 6);
+        }
+        return;
+    }
+
+    /**
+     * Avanza una celda hacia (nextX, nextY).
+     * grow = true  -> crea un Node nuevo (la serpiente crece).
+     * grow = false -> recicla el nodo de la cola como nueva cabeza.
+     */
+    method void step(boolean grow, boolean charged) {
+        var int nx, ny;
+        var Node n;
+        let nx = nextX();
+        let ny = nextY();
+        do Gfx.cell(head.getX(), head.getY(), 4);     // la cabeza vieja pasa a ser cuerpo
+        if (grow) {
+            let n = Node.new(nx, ny);
+            let len = len + 1;
+        } else {
+            let n = tail;
+            do world.clearCell(n.getX(), n.getY());
+            let tail = n.getNext();
+            do n.setNext(null);
+            do n.setPos(nx, ny);
+        }
+        do head.setNext(n);
+        let head = n;
+        do world.set(nx, ny, 4);
+        do drawHead(charged);
+        return;
+    }
+
+    /**
+     * REBOTE contra una pared de rebote = fragmentacion.
+     *   1. La mitad delantera se suelta y queda como BASURA en el campo.
+     *      (Sus nodos NO se liberan: siguen ocupando memoria.)
+     *   2. La mitad trasera se invierte con la funcion recursiva
+     *      Node.reverse(): la cola pasa a ser la cabeza.
+     * Con 3 segmentos o menos solo se invierte, sin soltar basura.
+     * Devuelve cuantos bloques de basura dejo.
+     */
+    method int bounce(boolean charged) {
+        var int keep, i, g, dx, dy;
+        var Node k, cut, nxt, second, newTail;
+
+        let keep = (len + 1) / 2;
+        if (keep < 3) { let keep = 3; }
+        if (keep > len) { let keep = len; }
+
+        // k = ultimo nodo que se conserva (contando desde la cola)
+        let k = tail;
+        let i = 1;
+        while (i < keep) {
+            let k = k.getNext();
+            let i = i + 1;
+        }
+
+        // Soltar todo lo que hay despues de k como basura
+        let cut = k.getNext();
+        do k.setNext(null);
+        let g = 0;
+        while (~(cut = null)) {
+            let nxt = cut.getNext();
+            do cut.setNext(null);
+            do world.putGarbage(cut);
+            let cut = nxt;
+            let g = g + 1;
+        }
+        if (g = 0) {
+            do Gfx.cell(head.getX(), head.getY(), 4);   // la cabeza vieja queda como cuerpo
+        }
+
+        // Nueva direccion: la que lleva del segundo nodo hacia la cola
+        let second = tail.getNext();
+        let dx = tail.getX() - second.getX();
+        let dy = tail.getY() - second.getY();
+        if (dx = 1)  { let dir = 4; }
+        if (dx = -1) { let dir = 3; }
+        if (dy = 1)  { let dir = 2; }
+        if (dy = -1) { let dir = 1; }
+
+        // Invertir la parte conservada (RECURSIVO)
+        let newTail = tail.reverse(null);
+        let head = tail;
+        let tail = newTail;
+        let len = keep;
+
+        do drawHead(charged);
+        return g;
+    }
+
+    /** Dibuja la serpiente completa (inicio de partida). */
+    method void drawFull(boolean charged) {
+        var Node n;
+        let n = tail;
+        while (~(n = null)) {
+            do Gfx.cell(n.getX(), n.getY(), 4);
+            let n = n.getNext();
+        }
+        do drawHead(charged);
+        return;
+    }
+
+    /** LIMPIEZA DE MEMORIA: libera todos los nodos (recursivo) y el objeto. */
+    method void dispose() {
+        var int freed;
+        if (~(tail = null)) {
+            let freed = tail.disposeAll();
+        }
+        do Memory.deAlloc(this);
+        return;
+    }
+}

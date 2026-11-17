@@ -1,0 +1,44 @@
+/**
+ * Generador Congruencial Lineal (LCG) de 16 bits.
+ * (Tomado de Ricochet Snake sin cambios de logica.)
+ */
+class Rng {
+    field int state;
+
+    constructor Rng new(int seed) {
+        let state = 12345;
+        do setSeed(seed);
+        return this;
+    }
+
+    method void setSeed(int seed) {
+        if (seed = 0) {
+            let state = 12345;
+        } else {
+            let state = seed;
+        }
+        return;
+    }
+
+    /** Siguiente entero de 15 bits (0 a 32767). */
+    method int next() {
+        let state = (state * 25173) + 13849;
+        return state & 32767;
+    }
+
+    /** Entero en [0, max - 1]. */
+    method int nextRange(int max) {
+        var int r, q;
+        if (max < 2) {
+            return 0;
+        }
+        let r = next();
+        let q = r / max;
+        return r - (q * max);
+    }
+
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}

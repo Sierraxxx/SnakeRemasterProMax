@@ -1,0 +1,119 @@
+/**
+ * Hud - marcador y pantallas de texto.
+ *
+ * LIMPIEZA DE MEMORIA: en Jack cada texto entre comillas crea un objeto
+ * String nuevo en el heap. Si nadie lo libera, la memoria se llena con el
+ * tiempo. Por eso TODO el texto del juego pasa por Hud.say() o Hud.put(),
+ * que imprimen el String y lo liberan enseguida con dispose().
+ */
+class Hud {
+
+    /** Imprime s en (fila, columna) y libera el String. */
+    function void say(int row, int col, String s) {
+        do Output.moveCursor(row, col);
+        do Output.printString(s);
+        do s.dispose();
+        return;
+    }
+
+    /** Imprime s donde este el cursor y libera el String. */
+    function void put(String s) {
+        do Output.printString(s);
+        do s.dispose();
+        return;
+    }
+
+    /** Pantalla de titulo. Cuenta vueltas hasta la primera tecla: esa es la semilla. */
+    function int showStart() {
+        var int seed;
+        do Screen.clearScreen();
+        do Hud.say(1, 24, "LA RECOLECTORA");
+        do Hud.say(3, 4, "Tu serpiente es una lista enlazada: cada segmento ocupa");
+        do Hud.say(4, 4, "memoria. Solo hay espacio para 40 nodos.");
+        do Hud.say(6, 4, "FLECHAS  mover          P  pausa          Q  salir");
+        do Hud.say(8, 4, "Rombo    = DATO: +10 puntos y creces 1 nodo.");
+        do Hud.say(9, 4, "Marco    = REBOTE: te inviertes y tu mitad delantera");
+        do Hud.say(10, 4, "           queda tirada como BASURA (sigue en memoria).");
+        do Hud.say(11, 4, "Pelota   = RECOLECTOR: rebota por el campo y en tu");
+        do Hud.say(12, 4, "           cuerpo. Atrapala con la cabeza para cargarte.");
+        do Hud.say(13, 4, "Cargada, toca una basura: se limpia en cadena todo el");
+        do Hud.say(14, 4, "grupo conectado. Puntos = bloques x bloques.");
+        do Hud.say(16, 4, "MUERES si tocas: bloque negro, basura sin carga, tu cuerpo,");
+        do Hud.say(17, 4, "o si comes un dato con la memoria llena (40/40).");
+        do Hud.say(20, 16, "Pulsa cualquier tecla para empezar");
+        let seed = 1;
+        while (Keyboard.keyPressed() = 0) {
+            let seed = seed + 1;
+            if (seed > 30000) {
+                let seed = 1;
+            }
+        }
+        while (~(Keyboard.keyPressed() = 0)) {
+            let seed = seed + 1;
+        }
+        return seed;
+    }
+
+    /** Redibuja el marcador (fila de texto 0). Solo se llama cuando algo cambio. */
+    function void update(int score, int mem, int limit, boolean charged, int combo) {
+        do Screen.setColor(false);
+        do Screen.drawRectangle(0, 0, 511, 15);
+        do Screen.setColor(true);
+        do Screen.drawLine(0, 13, 511, 13);
+
+        do Hud.say(0, 1, "Puntos:");
+        do Output.printInt(score);
+        do Hud.say(0, 16, "Memoria:");
+        do Output.printInt(mem);
+        do Hud.put("/");
+        do Output.printInt(limit);
+        if (charged) {
+            do Hud.say(0, 33, "Recolector:LISTO");
+        } else {
+            do Hud.say(0, 33, "Recolector:--");
+        }
+        do Hud.say(0, 52, "Combo:");
+        do Output.printInt(combo);
+        return;
+    }
+
+    /** Muestra PAUSA en el marcador (al salir de la pausa, Game redibuja el marcador). */
+    function void showPause() {
+        do Hud.say(0, 52, "PAUSA     ");
+        return;
+    }
+
+    /**
+     * Fin de partida. reason: 1 pared, 2 basura, 3 cuerpo, 4 memoria llena.
+     * Devuelve true si el jugador quiere reiniciar (R) o false si sale (Q).
+     */
+    function boolean showGameOver(int score, int reason) {
+        var char key;
+        do Screen.setColor(true);
+        do Screen.drawRectangle(96, 76, 415, 172);
+        do Screen.setColor(false);
+        do Screen.drawRectangle(99, 79, 412, 169);
+
+        do Hud.say(8, 25, "FIN DE PARTIDA");
+        if (reason = 1) { do Hud.say(10, 17, "Chocaste con una pared solida"); }
+        if (reason = 2) { do Hud.say(10, 17, "Tocaste basura sin estar cargada"); }
+        if (reason = 3) { do Hud.say(10, 17, "Chocaste con tu propio cuerpo"); }
+        if (reason = 4) { do Hud.say(10, 17, "Memoria agotada: 40 de 40 nodos"); }
+        do Hud.say(12, 22, "Puntaje final: ");
+        do Output.printInt(score);
+        do Hud.say(14, 19, "[R] Reiniciar   [Q] Salir");
+
+        while (true) {
+            let key = Keyboard.keyPressed();
+            if ((key = 82) | (key = 114)) {
+                while (~(Keyboard.keyPressed() = 0)) { }
+                return true;
+            }
+            if ((key = 81) | (key = 113)) {
+                while (~(Keyboard.keyPressed() = 0)) { }
+                return false;
+            }
+        }
+        return false;
+    }
+}

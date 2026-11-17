@@ -1,0 +1,936 @@
+function World.new 3
+push constant 4
+call Memory.alloc 1
+pop pointer 0
+push constant 480
+call Array.new 1
+pop this 0
+push constant 480
+call Array.new 1
+pop this 1
+push constant 90
+call Array.new 1
+pop this 2
+push constant 0
+pop local 0
+label World_L1
+push local 0
+push constant 480
+lt
+not
+if-goto World_L2
+push this 0
+push local 0
+add
+push constant 0
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push this 1
+push local 0
+add
+push constant 0
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push local 0
+push constant 1
+add
+pop local 0
+goto World_L1
+label World_L2
+push constant 0
+pop local 0
+push constant 0
+pop local 1
+label World_L3
+push local 1
+push constant 32
+lt
+not
+if-goto World_L4
+push this 2
+push local 0
+add
+push local 1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push local 0
+push constant 1
+add
+pop local 0
+push local 1
+push constant 1
+add
+pop local 1
+goto World_L3
+label World_L4
+push constant 1
+pop local 2
+label World_L5
+push local 2
+push constant 14
+lt
+not
+if-goto World_L6
+push this 2
+push local 0
+add
+push local 2
+push constant 32
+call Math.multiply 2
+push constant 31
+add
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push local 0
+push constant 1
+add
+pop local 0
+push local 2
+push constant 1
+add
+pop local 2
+goto World_L5
+label World_L6
+push constant 31
+pop local 1
+label World_L7
+push local 1
+push constant 1
+neg
+gt
+not
+if-goto World_L8
+push this 2
+push local 0
+add
+push constant 448
+push local 1
+add
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push local 0
+push constant 1
+add
+pop local 0
+push local 1
+push constant 1
+sub
+pop local 1
+goto World_L7
+label World_L8
+push constant 13
+pop local 2
+label World_L9
+push local 2
+push constant 0
+gt
+not
+if-goto World_L10
+push this 2
+push local 0
+add
+push local 2
+push constant 32
+call Math.multiply 2
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push local 0
+push constant 1
+add
+pop local 0
+push local 2
+push constant 1
+sub
+pop local 2
+goto World_L9
+label World_L10
+push constant 0
+pop this 3
+push pointer 0
+return
+function World.get 0
+push argument 0
+pop pointer 0
+push argument 1
+push constant 0
+lt
+push argument 1
+push constant 31
+gt
+or
+push argument 2
+push constant 0
+lt
+or
+push argument 2
+push constant 14
+gt
+or
+not
+if-goto World_L11
+push constant 1
+return
+goto World_L12
+label World_L11
+label World_L12
+push this 0
+push argument 2
+push constant 32
+call Math.multiply 2
+push argument 1
+add
+add
+pop pointer 1
+push that 0
+return
+function World.set 0
+push argument 0
+pop pointer 0
+push this 0
+push argument 2
+push constant 32
+call Math.multiply 2
+push argument 1
+add
+add
+push argument 3
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push constant 0
+return
+function World.put 0
+push argument 0
+pop pointer 0
+push this 0
+push argument 2
+push constant 32
+call Math.multiply 2
+push argument 1
+add
+add
+push argument 3
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push argument 1
+push argument 2
+push argument 3
+call Gfx.cell 3
+pop temp 0
+push constant 0
+return
+function World.clearCell 0
+push argument 0
+pop pointer 0
+push pointer 0
+push argument 1
+push argument 2
+push constant 0
+call World.put 4
+pop temp 0
+push constant 0
+return
+function World.clearIfType 0
+push argument 0
+pop pointer 0
+push this 0
+push argument 2
+push constant 32
+call Math.multiply 2
+push argument 1
+add
+add
+pop pointer 1
+push that 0
+push argument 3
+eq
+not
+if-goto World_L13
+push pointer 0
+push argument 1
+push argument 2
+call World.clearCell 3
+pop temp 0
+goto World_L14
+label World_L13
+label World_L14
+push constant 0
+return
+function World.reset 4
+push argument 0
+pop pointer 0
+push constant 0
+pop local 0
+label World_L15
+push local 0
+push constant 480
+lt
+not
+if-goto World_L16
+push this 1
+push local 0
+add
+pop pointer 1
+push that 0
+pop local 3
+push local 3
+push constant 0
+eq
+not
+not
+if-goto World_L17
+push local 3
+call Node.dispose 1
+pop temp 0
+push this 1
+push local 0
+add
+push constant 0
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+goto World_L18
+label World_L17
+label World_L18
+push this 0
+push local 0
+add
+push constant 0
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push local 0
+push constant 1
+add
+pop local 0
+goto World_L15
+label World_L16
+push constant 0
+pop local 1
+label World_L19
+push local 1
+push constant 32
+lt
+not
+if-goto World_L20
+push local 1
+push constant 4
+lt
+push local 1
+push constant 27
+gt
+or
+not
+if-goto World_L21
+push pointer 0
+push local 1
+push constant 0
+push constant 1
+call World.set 4
+pop temp 0
+push pointer 0
+push local 1
+push constant 14
+push constant 1
+call World.set 4
+pop temp 0
+goto World_L22
+label World_L21
+push pointer 0
+push local 1
+push constant 0
+push constant 2
+call World.set 4
+pop temp 0
+push pointer 0
+push local 1
+push constant 14
+push constant 2
+call World.set 4
+pop temp 0
+label World_L22
+push local 1
+push constant 1
+add
+pop local 1
+goto World_L19
+label World_L20
+push constant 1
+pop local 2
+label World_L23
+push local 2
+push constant 14
+lt
+not
+if-goto World_L24
+push pointer 0
+push constant 0
+push local 2
+push constant 2
+call World.set 4
+pop temp 0
+push pointer 0
+push constant 31
+push local 2
+push constant 2
+call World.set 4
+pop temp 0
+push local 2
+push constant 1
+add
+pop local 2
+goto World_L23
+label World_L24
+push pointer 0
+push constant 8
+push constant 3
+push constant 1
+call World.set 4
+pop temp 0
+push pointer 0
+push constant 23
+push constant 3
+push constant 1
+call World.set 4
+pop temp 0
+push pointer 0
+push constant 8
+push constant 11
+push constant 1
+call World.set 4
+pop temp 0
+push pointer 0
+push constant 23
+push constant 11
+push constant 1
+call World.set 4
+pop temp 0
+push constant 6
+pop local 2
+label World_L25
+push local 2
+push constant 9
+lt
+not
+if-goto World_L26
+push pointer 0
+push constant 15
+push local 2
+push constant 2
+call World.set 4
+pop temp 0
+push pointer 0
+push constant 16
+push local 2
+push constant 2
+call World.set 4
+pop temp 0
+push local 2
+push constant 1
+add
+pop local 2
+goto World_L25
+label World_L26
+push constant 0
+pop this 3
+push constant 0
+return
+function World.drawAll 2
+push argument 0
+pop pointer 0
+push constant 0
+pop local 1
+label World_L27
+push local 1
+push constant 15
+lt
+not
+if-goto World_L28
+push constant 0
+pop local 0
+label World_L29
+push local 0
+push constant 32
+lt
+not
+if-goto World_L30
+push local 0
+push local 1
+push this 0
+push local 1
+push constant 32
+call Math.multiply 2
+push local 0
+add
+add
+pop pointer 1
+push that 0
+call Gfx.cell 3
+pop temp 0
+push local 0
+push constant 1
+add
+pop local 0
+goto World_L29
+label World_L30
+push local 1
+push constant 1
+add
+pop local 1
+goto World_L27
+label World_L28
+push constant 0
+return
+function World.animate 3
+push argument 0
+pop pointer 0
+push constant 0
+pop local 0
+label World_L31
+push local 0
+push constant 3
+lt
+not
+if-goto World_L32
+push this 3
+push local 0
+push constant 30
+call Math.multiply 2
+add
+pop local 1
+push local 1
+push constant 89
+gt
+not
+if-goto World_L33
+push local 1
+push constant 90
+sub
+pop local 1
+goto World_L34
+label World_L33
+label World_L34
+push this 2
+push local 1
+add
+pop pointer 1
+push that 0
+pop local 2
+push local 2
+push local 2
+push constant 32
+call Math.divide 2
+push constant 32
+call Math.multiply 2
+sub
+push local 2
+push constant 32
+call Math.divide 2
+push this 0
+push local 2
+add
+pop pointer 1
+push that 0
+call Gfx.cell 3
+pop temp 0
+push local 1
+push constant 1
+add
+pop local 1
+push local 1
+push constant 89
+gt
+not
+if-goto World_L35
+push local 1
+push constant 90
+sub
+pop local 1
+goto World_L36
+label World_L35
+label World_L36
+push this 2
+push local 1
+add
+pop pointer 1
+push that 0
+pop local 2
+push local 2
+push local 2
+push constant 32
+call Math.divide 2
+push constant 32
+call Math.multiply 2
+sub
+push local 2
+push constant 32
+call Math.divide 2
+push this 0
+push local 2
+add
+pop pointer 1
+push that 0
+push constant 7
+add
+call Gfx.cell 3
+pop temp 0
+push local 0
+push constant 1
+add
+pop local 0
+goto World_L31
+label World_L32
+push this 3
+push constant 1
+add
+pop this 3
+push this 3
+push constant 89
+gt
+not
+if-goto World_L37
+push constant 0
+pop this 3
+goto World_L38
+label World_L37
+label World_L38
+push constant 0
+return
+function World.putGarbage 0
+push argument 0
+pop pointer 0
+push this 1
+push argument 1
+call Node.getY 1
+push constant 32
+call Math.multiply 2
+push argument 1
+call Node.getX 1
+add
+add
+push argument 1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push pointer 0
+push argument 1
+call Node.getX 1
+push argument 1
+call Node.getY 1
+push constant 3
+call World.put 4
+pop temp 0
+push constant 0
+return
+function World.sweep 3
+push argument 0
+pop pointer 0
+push argument 1
+push constant 0
+lt
+push argument 1
+push constant 31
+gt
+or
+push argument 2
+push constant 0
+lt
+or
+push argument 2
+push constant 14
+gt
+or
+not
+if-goto World_L39
+push constant 0
+return
+goto World_L40
+label World_L39
+label World_L40
+push argument 2
+push constant 32
+call Math.multiply 2
+push argument 1
+add
+pop local 0
+push this 0
+push local 0
+add
+pop pointer 1
+push that 0
+push constant 3
+eq
+not
+not
+if-goto World_L41
+push constant 0
+return
+goto World_L42
+label World_L41
+label World_L42
+push this 1
+push local 0
+add
+pop pointer 1
+push that 0
+pop local 2
+push local 2
+call Node.dispose 1
+pop temp 0
+push this 1
+push local 0
+add
+push constant 0
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push pointer 0
+push argument 1
+push argument 2
+call World.clearCell 3
+pop temp 0
+push constant 20
+call Sys.wait 1
+pop temp 0
+push constant 1
+pop local 1
+push local 1
+push pointer 0
+push argument 1
+push constant 1
+add
+push argument 2
+call World.sweep 3
+add
+pop local 1
+push local 1
+push pointer 0
+push argument 1
+push constant 1
+sub
+push argument 2
+call World.sweep 3
+add
+pop local 1
+push local 1
+push pointer 0
+push argument 1
+push argument 2
+push constant 1
+add
+call World.sweep 3
+add
+pop local 1
+push local 1
+push pointer 0
+push argument 1
+push argument 2
+push constant 1
+sub
+call World.sweep 3
+add
+pop local 1
+push local 1
+return
+function World.spawnData 4
+push argument 0
+pop pointer 0
+push constant 0
+pop local 0
+label World_L43
+push local 0
+push constant 60
+lt
+not
+if-goto World_L44
+push argument 1
+push constant 30
+call Rng.nextRange 2
+push constant 1
+add
+pop local 1
+push argument 1
+push constant 13
+call Rng.nextRange 2
+push constant 1
+add
+pop local 2
+push local 2
+push constant 32
+call Math.multiply 2
+push local 1
+add
+pop local 3
+push this 0
+push local 3
+add
+pop pointer 1
+push that 0
+push constant 0
+eq
+push argument 2
+push local 1
+push local 2
+call Ball.overlapsCell 3
+not
+and
+not
+if-goto World_L45
+push pointer 0
+push local 1
+push local 2
+push constant 5
+call World.put 4
+pop temp 0
+push local 3
+return
+goto World_L46
+label World_L45
+label World_L46
+push local 0
+push constant 1
+add
+pop local 0
+goto World_L43
+label World_L44
+push constant 1
+neg
+return
+function World.freeCellFar 5
+push argument 0
+pop pointer 0
+push constant 0
+pop local 0
+label World_L47
+push local 0
+push constant 60
+lt
+not
+if-goto World_L48
+push argument 1
+push constant 30
+call Rng.nextRange 2
+push constant 1
+add
+pop local 1
+push argument 1
+push constant 13
+call Rng.nextRange 2
+push constant 1
+add
+pop local 2
+push local 1
+push argument 2
+sub
+call Math.abs 1
+pop local 3
+push local 2
+push argument 3
+sub
+call Math.abs 1
+pop local 4
+push this 0
+push local 2
+push constant 32
+call Math.multiply 2
+push local 1
+add
+add
+pop pointer 1
+push that 0
+push constant 0
+eq
+push local 3
+push local 4
+add
+push constant 5
+gt
+and
+not
+if-goto World_L49
+push local 2
+push constant 32
+call Math.multiply 2
+push local 1
+add
+return
+goto World_L50
+label World_L49
+label World_L50
+push local 0
+push constant 1
+add
+pop local 0
+goto World_L47
+label World_L48
+push constant 1
+neg
+return
+function World.dispose 2
+push argument 0
+pop pointer 0
+push constant 0
+pop local 0
+label World_L51
+push local 0
+push constant 480
+lt
+not
+if-goto World_L52
+push this 1
+push local 0
+add
+pop pointer 1
+push that 0
+pop local 1
+push local 1
+push constant 0
+eq
+not
+not
+if-goto World_L53
+push local 1
+call Node.dispose 1
+pop temp 0
+goto World_L54
+label World_L53
+label World_L54
+push local 0
+push constant 1
+add
+pop local 0
+goto World_L51
+label World_L52
+push this 0
+call Array.dispose 1
+pop temp 0
+push this 1
+call Array.dispose 1
+pop temp 0
+push this 2
+call Array.dispose 1
+pop temp 0
+push pointer 0
+call Memory.deAlloc 1
+pop temp 0
+push constant 0
+return

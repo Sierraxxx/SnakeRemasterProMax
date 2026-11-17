@@ -1,0 +1,325 @@
+function Ball.new 0
+push constant 5
+call Memory.alloc 1
+pop pointer 0
+push constant 0
+pop this 4
+push pointer 0
+return
+function Ball.isActive 0
+push argument 0
+pop pointer 0
+push this 4
+return
+function Ball.getX 0
+push argument 0
+pop pointer 0
+push this 0
+return
+function Ball.getY 0
+push argument 0
+pop pointer 0
+push this 1
+return
+function Ball.spawn 0
+push argument 0
+pop pointer 0
+push argument 1
+push constant 16
+call Math.multiply 2
+push constant 8
+add
+pop this 0
+push constant 16
+push argument 2
+push constant 16
+call Math.multiply 2
+add
+push constant 8
+add
+pop this 1
+push argument 3
+pop this 2
+push argument 4
+pop this 3
+push constant 0
+not
+pop this 4
+push constant 0
+return
+function Ball.deactivate 0
+push argument 0
+pop pointer 0
+push constant 0
+pop this 4
+push constant 0
+return
+function Ball.draw 0
+push argument 0
+pop pointer 0
+push this 4
+not
+if-goto Ball_L1
+push this 0
+push this 1
+push constant 0
+not
+call Gfx.ball 3
+pop temp 0
+goto Ball_L2
+label Ball_L1
+label Ball_L2
+push constant 0
+return
+function Ball.erase 0
+push argument 0
+pop pointer 0
+push this 4
+not
+if-goto Ball_L3
+push this 0
+push this 1
+push constant 0
+call Gfx.ball 3
+pop temp 0
+goto Ball_L4
+label Ball_L3
+label Ball_L4
+push constant 0
+return
+function Ball.overlapsCell 2
+push argument 0
+pop pointer 0
+push this 4
+not
+not
+if-goto Ball_L5
+push constant 0
+return
+goto Ball_L6
+label Ball_L5
+label Ball_L6
+push argument 1
+push constant 16
+call Math.multiply 2
+pop local 0
+push constant 16
+push argument 2
+push constant 16
+call Math.multiply 2
+add
+pop local 1
+push this 0
+push constant 2
+add
+push local 0
+push constant 1
+sub
+gt
+push this 0
+push constant 3
+sub
+push local 0
+push constant 16
+add
+lt
+and
+push this 1
+push constant 2
+add
+push local 1
+push constant 1
+sub
+gt
+and
+push this 1
+push constant 3
+sub
+push local 1
+push constant 16
+add
+lt
+and
+return
+function Ball.probe 4
+push argument 0
+pop pointer 0
+push constant 0
+pop local 3
+push constant 0
+pop local 0
+label Ball_L7
+push local 0
+push constant 4
+lt
+not
+if-goto Ball_L8
+push local 0
+push constant 0
+eq
+push local 0
+push constant 2
+eq
+or
+not
+if-goto Ball_L9
+push argument 2
+push constant 3
+sub
+push constant 16
+call Math.divide 2
+pop local 1
+goto Ball_L10
+label Ball_L9
+push argument 2
+push constant 2
+add
+push constant 16
+call Math.divide 2
+pop local 1
+label Ball_L10
+push local 0
+push constant 2
+lt
+not
+if-goto Ball_L11
+push argument 3
+push constant 19
+sub
+push constant 16
+call Math.divide 2
+pop local 2
+goto Ball_L12
+label Ball_L11
+push argument 3
+push constant 14
+sub
+push constant 16
+call Math.divide 2
+pop local 2
+label Ball_L12
+push local 1
+push argument 4
+eq
+push local 2
+push argument 5
+eq
+and
+not
+if-goto Ball_L13
+push constant 2
+return
+goto Ball_L14
+label Ball_L13
+label Ball_L14
+push argument 1
+push local 1
+push local 2
+call World.get 3
+push constant 0
+eq
+not
+not
+if-goto Ball_L15
+push constant 1
+pop local 3
+goto Ball_L16
+label Ball_L15
+label Ball_L16
+push local 0
+push constant 1
+add
+pop local 0
+goto Ball_L7
+label Ball_L8
+push local 3
+return
+function Ball.step 3
+push argument 0
+pop pointer 0
+push this 0
+push this 2
+add
+pop local 0
+push pointer 0
+push argument 1
+push local 0
+push this 1
+push argument 2
+push argument 3
+call Ball.probe 6
+pop local 2
+push local 2
+push constant 2
+eq
+not
+if-goto Ball_L17
+push constant 0
+not
+return
+goto Ball_L18
+label Ball_L17
+label Ball_L18
+push local 2
+push constant 1
+eq
+not
+if-goto Ball_L19
+push this 2
+neg
+pop this 2
+push this 0
+pop local 0
+goto Ball_L20
+label Ball_L19
+label Ball_L20
+push this 1
+push this 3
+add
+pop local 1
+push pointer 0
+push argument 1
+push local 0
+push local 1
+push argument 2
+push argument 3
+call Ball.probe 6
+pop local 2
+push local 2
+push constant 2
+eq
+not
+if-goto Ball_L21
+push constant 0
+not
+return
+goto Ball_L22
+label Ball_L21
+label Ball_L22
+push local 2
+push constant 1
+eq
+not
+if-goto Ball_L23
+push this 3
+neg
+pop this 3
+push this 1
+pop local 1
+goto Ball_L24
+label Ball_L23
+label Ball_L24
+push local 0
+pop this 0
+push local 1
+pop this 1
+push constant 0
+return
+function Ball.dispose 0
+push argument 0
+pop pointer 0
+push pointer 0
+call Memory.deAlloc 1
+pop temp 0
+push constant 0
+return

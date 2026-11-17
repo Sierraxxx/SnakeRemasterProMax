@@ -1,0 +1,120 @@
+/**
+ * Ball - el RECOLECTOR: una pelota con fisica de rebote, como en Pong.
+ *
+ * Estado: posicion (x, y) en pixeles (centro) y velocidad (vx, vy) en
+ * pixeles por paso. Ocupa el cuadro [x-3, x+2] x [y-3, y+2].
+ *
+ * Fisica (reflexion especular, eje por eje):
+ *   1. Se intenta mover en X:  x' = x + vx.
+ *      Si el cuadro choca con algo, se refleja:  vx = -vx  y  x' = x.
+ *   2. Se intenta mover en Y:  y' = y + vy.
+ *      Si choca:  vy = -vy  y  y' = y.
+ * Rebota contra paredes, basura, datos y el CUERPO de la serpiente
+ * (tu cuerpo funciona como la paleta de Pong). Si toca la CABEZA, la
+ * serpiente la atrapa y queda cargada para limpiar basura.
+ *
+ * Invariante: el cuadro de la pelota solo esta sobre celdas LIBRES.
+ * Gracias a eso Gfx.ball puede dibujar y borrar palabras completas.
+ */
+class Ball {
+    field int x, y, vx, vy;
+    field boolean active;
+
+    constructor Ball new() {
+        let active = false;
+        return this;
+    }
+
+    method boolean isActive() { return active; }
+    method int getX() { return x; }
+    method int getY() { return y; }
+
+    /** Aparece en el centro de la celda (cx, cy) con la velocidad dada. */
+    method void spawn(int cx, int cy, int avx, int avy) {
+        let x = (cx * 16) + 8;
+        let y = 16 + (cy * 16) + 8;
+        let vx = avx;
+        let vy = avy;
+        let active = true;
+        return;
+    }
+
+    method void deactivate() {
+        let active = false;
+        return;
+    }
+
+    method void draw() {
+        if (active) { do Gfx.ball(x, y, true); }
+        return;
+    }
+
+    method void erase() {
+        if (active) { do Gfx.ball(x, y, false); }
+        return;
+    }
+
+    /** true si el cuadro de la pelota toca la celda (cx, cy). */
+    method boolean overlapsCell(int cx, int cy) {
+        var int left, top;
+        if (~active) { return false; }
+        let left = cx * 16;
+        let top = 16 + (cy * 16);
+        return ((x + 2) > (left - 1)) & ((x - 3) < (left + 16))
+             & ((y + 2) > (top - 1)) & ((y - 3) < (top + 16));
+    }
+
+    /**
+     * Mira las 4 esquinas del cuadro si el centro estuviera en (px, py).
+     * Devuelve 0 = todo libre, 1 = choca, 2 = toca la cabeza (hx, hy).
+     */
+    method int probe(World w, int px, int py, int hx, int hy) {
+        var int i, cx, cy, hit;
+        let hit = 0;
+        let i = 0;
+        while (i < 4) {
+            if ((i = 0) | (i = 2)) { let cx = (px - 3) / 16; } else { let cx = (px + 2) / 16; }
+            if (i < 2) { let cy = (py - 19) / 16; } else { let cy = (py - 14) / 16; }
+            if ((cx = hx) & (cy = hy)) {
+                return 2;
+            }
+            if (~(w.get(cx, cy) = 0)) {
+                let hit = 1;
+            }
+            let i = i + 1;
+        }
+        return hit;
+    }
+
+    /**
+     * Avanza un paso de fisica. (hx, hy) = celda de la cabeza.
+     * Devuelve true si la cabeza atrapo la pelota.
+     */
+    method boolean step(World w, int hx, int hy) {
+        var int nx, ny, h;
+        // Eje X
+        let nx = x + vx;
+        let h = probe(w, nx, y, hx, hy);
+        if (h = 2) { return true; }
+        if (h = 1) {
+            let vx = -vx;           // reflexion: se invierte la componente horizontal
+            let nx = x;
+        }
+        // Eje Y (con la X ya resuelta: asi tambien se detectan las esquinas)
+        let ny = y + vy;
+        let h = probe(w, nx, ny, hx, hy);
+        if (h = 2) { return true; }
+        if (h = 1) {
+            let vy = -vy;           // reflexion: se invierte la componente vertical
+            let ny = y;
+        }
+        let x = nx;
+        let y = ny;
+        return false;
+    }
+
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}

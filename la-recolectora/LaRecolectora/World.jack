@@ -1,0 +1,283 @@
+/**
+ * World - el campo de juego: 32 x 15 celdas de 16x16 pixeles.
+ * (Las primeras 16 filas de pixeles de la pantalla son el marcador.)
+ *
+ * grid[y*32 + x] = tipo de cada celda, que coincide con el numero de sprite:
+ *   0 = libre         3 = basura (un Node que nadie usa pero sigue en memoria)
+ *   1 = pared solida  4 = cuerpo de la serpiente
+ *   2 = pared rebote  5 = dato
+ *
+ * objs[y*32 + x] = el Node de cada basura, para poder liberarlo con dispose().
+ *
+ * ring[] = las 90 celdas del borde en orden horario. Por ese anillo viajan
+ * 3 pulsos de luz (el "bus de datos"): es el fondo dinamico del juego.
+ *
+ * Aqui esta la funcion RECURSIVA sweep(): la limpieza en cadena.
+ */
+class World {
+    field Array grid;
+    field Array objs;
+    field Array ring;
+    field int phase;
+
+    constructor World new() {
+        var int i, x, y;
+        let grid = Array.new(480);
+        let objs = Array.new(480);
+        let ring = Array.new(90);
+        let i = 0;
+        while (i < 480) {
+            let grid[i] = 0;
+            let objs[i] = null;
+            let i = i + 1;
+        }
+        // Anillo del borde en sentido horario: arriba, derecha, abajo, izquierda
+        let i = 0;
+        let x = 0;
+        while (x < 32) {                    // fila 0, de izquierda a derecha
+            let ring[i] = x;
+            let i = i + 1;
+            let x = x + 1;
+        }
+        let y = 1;
+        while (y < 14) {                    // columna 31, hacia abajo
+            let ring[i] = (y * 32) + 31;
+            let i = i + 1;
+            let y = y + 1;
+        }
+        let x = 31;
+        while (x > -1) {                    // fila 14, de derecha a izquierda
+            let ring[i] = 448 + x;
+            let i = i + 1;
+            let x = x - 1;
+        }
+        let y = 13;
+        while (y > 0) {                     // columna 0, hacia arriba
+            let ring[i] = y * 32;
+            let i = i + 1;
+            let y = y - 1;
+        }
+        let phase = 0;
+        return this;
+    }
+
+    /** Tipo de la celda (x, y). Fuera del campo cuenta como pared solida. */
+    method int get(int x, int y) {
+        if ((x < 0) | (x > 31) | (y < 0) | (y > 14)) {
+            return 1;
+        }
+        return grid[(y * 32) + x];
+    }
+
+    method void set(int x, int y, int type) {
+        let grid[(y * 32) + x] = type;
+        return;
+    }
+
+    /** Cambia el tipo de la celda y la redibuja con su sprite. */
+    method void put(int x, int y, int type) {
+        let grid[(y * 32) + x] = type;
+        do Gfx.cell(x, y, type);
+        return;
+    }
+
+    /** Deja la celda libre (y en blanco). */
+    method void clearCell(int x, int y) {
+        do put(x, y, 0);
+        return;
+    }
+
+    /** Borra la celda solo si todavia contiene ese tipo (items que caducan). */
+    method void clearIfType(int x, int y, int type) {
+        if (grid[(y * 32) + x] = type) {
+            do clearCell(x, y);
+        }
+        return;
+    }
+
+    /**
+     * Prepara una partida nueva.
+     * LIMPIEZA DE MEMORIA: libera todos los nodos de basura que quedaron.
+     */
+    method void reset() {
+        var int i, x, y;
+        var Node g;
+        let i = 0;
+        while (i < 480) {
+            let g = objs[i];
+            if (~(g = null)) {
+                do g.dispose();
+                let objs[i] = null;
+            }
+            let grid[i] = 0;
+            let i = i + 1;
+        }
+        // Borde superior e inferior: esquinas solidas, centro de rebote
+        let x = 0;
+        while (x < 32) {
+            if ((x < 4) | (x > 27)) {
+                do set(x, 0, 1);
+                do set(x, 14, 1);
+            } else {
+                do set(x, 0, 2);
+                do set(x, 14, 2);
+            }
+            let x = x + 1;
+        }
+        // Bordes laterales de rebote
+        let y = 1;
+        while (y < 14) {
+            do set(0, y, 2);
+            do set(31, y, 2);
+            let y = y + 1;
+        }
+        // Obstaculos interiores: 4 bloques solidos y una barra de rebote
+        do set(8, 3, 1);
+        do set(23, 3, 1);
+        do set(8, 11, 1);
+        do set(23, 11, 1);
+        let y = 6;
+        while (y < 9) {
+            do set(15, y, 2);
+            do set(16, y, 2);
+            let y = y + 1;
+        }
+        let phase = 0;
+        return;
+    }
+
+    /** Dibuja las 480 celdas (una vez por partida). */
+    method void drawAll() {
+        var int x, y;
+        let y = 0;
+        while (y < 15) {
+            let x = 0;
+            while (x < 32) {
+                do Gfx.cell(x, y, grid[(y * 32) + x]);
+                let x = x + 1;
+            }
+            let y = y + 1;
+        }
+        return;
+    }
+
+    /**
+     * FONDO DINAMICO: avanza los 3 pulsos del bus una celda.
+     * Solo redibuja 6 celdas por turno (3 se apagan y 3 se encienden).
+     */
+    method void animate() {
+        var int k, p, c;
+        let k = 0;
+        while (k < 3) {
+            let p = phase + (k * 30);
+            if (p > 89) { let p = p - 90; }
+            let c = ring[p];
+            do Gfx.cell(c - ((c / 32) * 32), c / 32, grid[c]);              // apagar
+            let p = p + 1;
+            if (p > 89) { let p = p - 90; }
+            let c = ring[p];
+            do Gfx.cell(c - ((c / 32) * 32), c / 32, grid[c] + 7);          // encender (1->8, 2->9)
+            let k = k + 1;
+        }
+        let phase = phase + 1;
+        if (phase > 89) { let phase = 0; }
+        return;
+    }
+
+    /** Convierte un nodo suelto de la serpiente en basura fija en su celda. */
+    method void putGarbage(Node n) {
+        let objs[(n.getY() * 32) + n.getX()] = n;
+        do put(n.getX(), n.getY(), 3);
+        return;
+    }
+
+    /**
+     * RECURSIVA. Limpieza en cadena (relleno por inundacion).
+     * Libera la basura de (x, y) y la de todas las celdas de basura
+     * conectadas por arriba, abajo, izquierda o derecha.
+     * Devuelve cuantos nodos libero.
+     *   Casos base:     fuera del campo, o la celda no es basura -> 0.
+     *   Caso recursivo: libero esta celda (1) + lo que liberen mis 4 vecinas.
+     */
+    method int sweep(int x, int y) {
+        var int i, n;
+        var Node g;
+        if ((x < 0) | (x > 31) | (y < 0) | (y > 14)) {
+            return 0;
+        }
+        let i = (y * 32) + x;
+        if (~(grid[i] = 3)) {
+            return 0;
+        }
+        let g = objs[i];
+        do g.dispose();
+        let objs[i] = null;
+        do clearCell(x, y);
+        do Sys.wait(20);
+        let n = 1;
+        let n = n + sweep(x + 1, y);
+        let n = n + sweep(x - 1, y);
+        let n = n + sweep(x, y + 1);
+        let n = n + sweep(x, y - 1);
+        return n;
+    }
+
+    /**
+     * Coloca un dato en una celda libre al azar que no toque la pelota.
+     * Devuelve la posicion como y*32+x, o -1 si no encontro lugar.
+     */
+    method int spawnData(Rng rng, Ball ball) {
+        var int tries, x, y, i;
+        let tries = 0;
+        while (tries < 60) {
+            let x = rng.nextRange(30) + 1;
+            let y = rng.nextRange(13) + 1;
+            let i = (y * 32) + x;
+            if ((grid[i] = 0) & (~ball.overlapsCell(x, y))) {
+                do put(x, y, 5);
+                return i;
+            }
+            let tries = tries + 1;
+        }
+        return -1;
+    }
+
+    /**
+     * Busca una celda libre al azar lejos de (hx, hy) para soltar la pelota.
+     * Devuelve y*32+x, o -1.
+     */
+    method int freeCellFar(Rng rng, int hx, int hy) {
+        var int tries, x, y, dx, dy;
+        let tries = 0;
+        while (tries < 60) {
+            let x = rng.nextRange(30) + 1;
+            let y = rng.nextRange(13) + 1;
+            let dx = Math.abs(x - hx);
+            let dy = Math.abs(y - hy);
+            if ((grid[(y * 32) + x] = 0) & ((dx + dy) > 5)) {
+                return (y * 32) + x;
+            }
+            let tries = tries + 1;
+        }
+        return -1;
+    }
+
+    /** LIMPIEZA DE MEMORIA: libera la basura restante, los tres arreglos y el objeto. */
+    method void dispose() {
+        var int i;
+        var Node g;
+        let i = 0;
+        while (i < 480) {
+            let g = objs[i];
+            if (~(g = null)) {
+                do g.dispose();
+            }
+            let i = i + 1;
+        }
+        do grid.dispose();
+        do objs.dispose();
+        do ring.dispose();
+        do Memory.deAlloc(this);
+        return;
+    }
+}
